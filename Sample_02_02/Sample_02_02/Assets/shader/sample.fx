@@ -17,7 +17,7 @@ struct VSOutput
 // 2. 戻り値は変換後の頂点情報
 VSOutput VSMain(VSInput In)
 {
-    VSOutput vsOut = (VSOutput)0;
+    VSOutput vsOut = (VSOutput) 0;
     vsOut.pos = In.pos;
     vsOut.color = In.color; // カラーの情報を出力する
     return vsOut;
@@ -27,14 +27,22 @@ VSOutput VSMain(VSInput In)
 float4 PSMain(VSOutput vsOut) : SV_Target0
 {
     // 赤色を出力している
-    return float4(1.0f, 0.0f , 0.0f, 1.0f);
+    //return float4(1.0f, 0.0f , 0.0f, 1.0f);
 
     // step-1 三角形を青色にする
-
+    //return float4(0.0f, 0.0f, 1.0f, 1.0f);
     // step-2 三角形を緑色にする
-
+    //return float4(0.0f, 1.0f, 0.0f, 1.0f);
     // step-3 三角形を黄色にする
-
+    //return float4(1.0f, 1.0f, 0.0f, 1.0);
     // step-4 頂点シェーダーから受け取ったカラーを出力する
+    //float4 color;
+    //color.x = vsOut.color.x * 250.0f;
+    //color.y = vsOut.color.y;
+    //color.z = vsOut.color.z;
+    //color.w = 1.0f;
+    //return color;
+    // これでもできる
+    return float4(vsOut.color * fmod(vsOut.pos.x, 125.0f) / 125.0f, 1.0f);
 
 }

@@ -10,81 +10,106 @@ void InitRootSignature(RootSignature& rs);
 ///////////////////////////////////////////////////////////////////
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow)
 {
-    // ゲームの初期化
-    InitGame(hInstance, hPrevInstance, lpCmdLine, nCmdShow, TEXT("Game"));
+	// ゲームの初期化
+	InitGame(hInstance, hPrevInstance, lpCmdLine, nCmdShow, TEXT("Game"));
 
-    //////////////////////////////////////
-    // ここから初期化を行うコードを記述する
-    //////////////////////////////////////
+	//////////////////////////////////////
+	// ここから初期化を行うコードを記述する
+	//////////////////////////////////////
 
-    // ルートシグネチャを作成
-    RootSignature rootSignature;
-    InitRootSignature(rootSignature);
+	// ルートシグネチャを作成
+	RootSignature rootSignature;
+	InitRootSignature(rootSignature);
 
-    // 定数バッファを作成
-    ConstantBuffer cb;
+	// 定数バッファを作成
+	ConstantBuffer cb;
 
-    cb.Init(sizeof(Matrix));
-    // 三角形ポリゴンを定義
-    TrianglePolygon triangle;
-    triangle.Init(rootSignature);
+	cb.Init(sizeof(Matrix));
+	// 三角形ポリゴンを定義
+	TrianglePolygon triangle;
+	triangle.Init(rootSignature);
 
-    // step-1 三角形ポリゴンにUV座標を設定
+	// UV座標を頂点0と頂点2で入れ替えると反転する
 
-    // step-2 テクスチャをロード
+	// step-1 三角形ポリゴンにUV座標を設定
+	triangle.SetUVCoord(
+		0, // 頂点の番号
+		1.0f, // U座標
+		1.0f // V座標
+	);
 
-    // ディスクリプタヒープを作成
-    DescriptorHeap ds;
-    ds.RegistConstantBuffer(0, cb); // ディスクリプタヒープに定数バッファを登録
+	triangle.SetUVCoord(
+		1, // 頂点の番号
+		0.5f, // U座標
+		0.0f // V座標
+	);
 
-    // step-3 テクスチャをディスクリプタヒープに登録
+	triangle.SetUVCoord(
+		2, // 頂点の番号
+		0.0f, // U座標
+		1.0f // V座標
+	);
 
-    ds.Commit();                    //ディスクリプタヒープへの登録を確定
+	// step-2 テクスチャをロード
+	Texture tex;
+	tex.InitFromDDSFile(L"Assets/image/sample_00.dds");
 
-    //////////////////////////////////////
-    // 初期化を行うコードを書くのはここまで！！！
-    //////////////////////////////////////
-    auto& renderContext = g_graphicsEngine->GetRenderContext();
+	// ディスクリプタヒープを作成
+	DescriptorHeap ds;
+	ds.RegistConstantBuffer(0, cb); // ディスクリプタヒープに定数バッファを登録
 
-    // ここからゲームループ
-    while (DispatchWindowMessage())
-    {
-        // フレーム開始
-        g_engine->BeginFrame();
+	// step-3 テクスチャをディスクリプタヒープに登録
+	ds.RegistShaderResource(
+		0, // レジスタ番号
+		tex // レジスタに設定するテクスチャ
+	);
 
-        //////////////////////////////////////
-        // ここから絵を描くコードを記述する
-        //////////////////////////////////////
+	ds.Commit();                    //ディスクリプタヒープへの登録を確定
 
-        // ルートシグネチャを設定
-        renderContext.SetRootSignature(rootSignature);
+	//////////////////////////////////////
+	// 初期化を行うコードを書くのはここまで！！！
+	//////////////////////////////////////
+	auto& renderContext = g_graphicsEngine->GetRenderContext();
 
-        // ワールド行列を作成
-        Matrix mWorld;
+	// ここからゲームループ
+	while (DispatchWindowMessage())
+	{
+		// フレーム開始
+		g_engine->BeginFrame();
 
-        // ワールド行列をグラフィックメモリにコピー
-        cb.CopyToVRAM(mWorld);
+		//////////////////////////////////////
+		// ここから絵を描くコードを記述する
+		//////////////////////////////////////
 
-        //ディスクリプタヒープを設定
-        renderContext.SetDescriptorHeap(ds);
+		// ルートシグネチャを設定
+		renderContext.SetRootSignature(rootSignature);
 
-        //三角形をドロー
-        triangle.Draw(renderContext);
+		// ワールド行列を作成
+		Matrix mWorld;
 
-        /// //////////////////////////////////////
-        //絵を描くコードを書くのはここまで！！！
-        //////////////////////////////////////
-        //フレーム終了
-        g_engine->EndFrame();
-    }
-    return 0;
+		// ワールド行列をグラフィックメモリにコピー
+		cb.CopyToVRAM(mWorld);
+
+		//ディスクリプタヒープを設定
+		renderContext.SetDescriptorHeap(ds);
+
+		//三角形をドロー
+		triangle.Draw(renderContext);
+
+		/// //////////////////////////////////////
+		//絵を描くコードを書くのはここまで！！！
+		//////////////////////////////////////
+		//フレーム終了
+		g_engine->EndFrame();
+	}
+	return 0;
 }
 
 //ルートシグネチャの初期化
 void InitRootSignature(RootSignature& rs)
 {
-    rs.Init(D3D12_FILTER_MIN_MAG_MIP_LINEAR,
-        D3D12_TEXTURE_ADDRESS_MODE_WRAP,
-        D3D12_TEXTURE_ADDRESS_MODE_WRAP,
-        D3D12_TEXTURE_ADDRESS_MODE_WRAP);
+	rs.Init(D3D12_FILTER_MIN_MAG_MIP_LINEAR,
+		D3D12_TEXTURE_ADDRESS_MODE_WRAP,
+		D3D12_TEXTURE_ADDRESS_MODE_WRAP,
+		D3D12_TEXTURE_ADDRESS_MODE_WRAP);
 }
