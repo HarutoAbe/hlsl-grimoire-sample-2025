@@ -9,6 +9,7 @@ struct DirectionLight
     float pad1;
 
     // step-1 構造体に視点の位置を追加する
+    Vector3 eyePos;
 };
 
 ///////////////////////////////////////////////////////////////////
@@ -36,11 +37,12 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
     directionLig.ligDirection.Normalize();
 
     // ライトのカラーは白
-    directionLig.ligColor.x = 0.5f;
-    directionLig.ligColor.y = 0.5f;
-    directionLig.ligColor.z = 0.5f;
+    directionLig.ligColor.x = 0.15f;
+    directionLig.ligColor.y = 0.3f;
+    directionLig.ligColor.z = 0.7f;
 
     // step-2 視点の位置を設定する
+    directionLig.eyePos = g_camera3D->GetPosition();
 
     // モデルを初期化する
     // モデルを初期化するための情報を構築する

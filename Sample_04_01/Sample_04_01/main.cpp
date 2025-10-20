@@ -17,7 +17,16 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 
     // step-1 3Dモデルをロードするための情報を設定する
 
+	ModelInitData initData;
+
+    initData.m_tkmFilePath = "Assets/modelData/sample.tkm";
+
+    initData.m_fxFilePath = "Assets/shader/sample.fx";
+
     // step-2 初期化情報を使ってモデル表示処理を初期化する
+
+    Model charaModel;
+    charaModel.Init(initData);
 
     //////////////////////////////////////
     // 初期化を行うコードを書くのはここまで！！！
@@ -35,6 +44,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
         //////////////////////////////////////
 
         // step-3 モデルのドローコールを実行する
+        charaModel.Draw(renderContext);
 
         //////////////////////////////////////
         // 絵を描くコードを書くのはここまで！！！

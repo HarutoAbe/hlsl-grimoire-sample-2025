@@ -38,7 +38,7 @@ float4 PSMain(VSOutput vsOut) : SV_Target0
     float4 texColor = g_texture.Sample(
         g_sampler, // 第1引数はサンプラー。今は気にしなくてよい
         vsOut.uv    // 第2引数はUV座標
-    );
+    ); 
     return texColor;
 
     // 以下はコメントアウト

@@ -19,7 +19,9 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 
 	// ルートシグネチャを作成
 	RootSignature rootSignature;
+	RootSignature rootSignature2;
 	InitRootSignature(rootSignature);
+	InitRootSignature(rootSignature2);
 
 	// 定数バッファを作成
 	ConstantBuffer cb;
@@ -27,7 +29,9 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 	cb.Init(sizeof(Matrix));
 	// 三角形ポリゴンを定義
 	TrianglePolygon triangle;
+	TrianglePolygon triangle2;
 	triangle.Init(rootSignature);
+	triangle2.Init(rootSignature2);
 
 	// UV座標を頂点0と頂点2で入れ替えると反転する
 
@@ -50,6 +54,8 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 		1.0f // V座標
 	);
 
+	
+
 	// step-2 テクスチャをロード
 	Texture tex;
 	tex.InitFromDDSFile(L"Assets/image/sample_00.dds");
@@ -70,7 +76,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 	// 初期化を行うコードを書くのはここまで！！！
 	//////////////////////////////////////
 	auto& renderContext = g_graphicsEngine->GetRenderContext();
-
+	
 	// ここからゲームループ
 	while (DispatchWindowMessage())
 	{
@@ -83,6 +89,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 
 		// ルートシグネチャを設定
 		renderContext.SetRootSignature(rootSignature);
+		renderContext.SetRootSignature(rootSignature2);
 
 		// ワールド行列を作成
 		Matrix mWorld;
@@ -95,6 +102,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 
 		//三角形をドロー
 		triangle.Draw(renderContext);
+		triangle2.Draw(renderContext);
 
 		/// //////////////////////////////////////
 		//絵を描くコードを書くのはここまで！！！
