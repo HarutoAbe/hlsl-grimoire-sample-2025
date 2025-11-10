@@ -75,7 +75,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
     // モデルを初期化する
     // モデルを初期化するための情報を構築する
     Model lightModel, bgModel, teapotModel;
-    InitModel(bgModel, teapotModel, lightModel , light);
+    InitModel(bgModel, teapotModel, lightModel, light);
 
     //////////////////////////////////////
     // 初期化を行うコードを書くのはここまで！！！

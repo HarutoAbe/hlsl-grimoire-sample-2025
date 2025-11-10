@@ -18,6 +18,11 @@ struct Light
     float pad3;
 
     // step-1 地面色と天球色、地面の法線を追加する
+    Vector3 groundColor;    // 地面色
+    float pad4;
+    Vector3 skyColor;       // 天球色
+    float pad5;
+    Vector3 groundNormal;   // 地面の法線
 };
 
 //////////////////////////////////////
@@ -31,8 +36,7 @@ void InitAmbientLight(Light& light);
 ///////////////////////////////////////////////////////////////////
 // ウィンドウプログラムのメイン関数
 ///////////////////////////////////////////////////////////////////
-int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
-                    LPWSTR lpCmdLine, int nCmdShow)
+int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow)
 {
     // ゲームの初期化
     InitGame(hInstance, hPrevInstance, lpCmdLine, nCmdShow, TEXT("Game"));
@@ -53,11 +57,25 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     InitAmbientLight(light);
 
     // step-2 地面色、天球色、地面の法線のデータを設定する
+    // 地面色を設定
+    light.groundColor.x = 0.7f;
+    light.groundColor.y = 0.5f;
+    light.groundColor.z = 0.3f;
+
+    // 天球色を設定
+    light.skyColor.x = 0.25f;
+    light.skyColor.y = 0.5f;
+    light.skyColor.z = 0.7f;
+
+    // 地面の法線を設定
+    light.groundNormal.x = 0.0f;
+    light.groundNormal.y = 1.0f;
+    light.groundNormal.z = 0.0f;
 
     // モデルを初期化する
     // モデルを初期化するための情報を構築する
     Model lightModel, bgModel, teapotModel;
-    InitModel(bgModel, teapotModel, lightModel , light);
+    InitModel(bgModel, teapotModel, lightModel, light);
 
     //////////////////////////////////////
     // 初期化を行うコードを書くのはここまで！！！
@@ -73,7 +91,6 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
         //////////////////////////////////////
         // ここから絵を描くコードを記述する
         //////////////////////////////////////
-
         // ライトを回す
         Quaternion qRotY;
         qRotY.SetRotation(g_vec3AxisY, g_pad[0]->GetLStickXF() * 0.02f);
