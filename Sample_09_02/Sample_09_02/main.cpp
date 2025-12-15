@@ -25,8 +25,20 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
     //////////////////////////////////////
 
     // step-1 ワイプパラメータ構造体を定義する
+    struct WipeParam {
+        Vector2 wipeDir;    //【注目】ワイプする方向
+        float wipeSize;     //ワイプサイズ
+    };
 
     // step-2 ワイプパラメータを初期化する
+    WipeParam wipeParam;
+    // ワイプする方向を設定する
+    // 今回は右下に向かってワイプする
+    wipeParam.wipeDir.Set(1.0f, 1.0f);
+    wipeParam.wipeDir.Normalize();
+
+    // ワイプサイズを初期化する
+    wipeParam.wipeSize = 0.0f;
 
     // まずはSpriteクラスの初期化オブジェクトを作成する
     SpriteInitData spriteInitData;
@@ -69,7 +81,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
         test2D.Draw(renderContext);
 
         //////////////////////////////////////
-        //絵を描くコードを書くのはここまで！！！
+        // 絵を描くコードを書くのはここまで！！！
         //////////////////////////////////////
         // 1フレーム終了
         g_engine->EndFrame();
@@ -81,9 +93,9 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 void InitRootSignature(RootSignature& rs)
 {
     rs.Init(D3D12_FILTER_MIN_MAG_MIP_LINEAR,
-            D3D12_TEXTURE_ADDRESS_MODE_WRAP,
-            D3D12_TEXTURE_ADDRESS_MODE_WRAP,
-            D3D12_TEXTURE_ADDRESS_MODE_WRAP);
+        D3D12_TEXTURE_ADDRESS_MODE_WRAP,
+        D3D12_TEXTURE_ADDRESS_MODE_WRAP,
+        D3D12_TEXTURE_ADDRESS_MODE_WRAP);
 }
 
 // パイプラインステートの初期化

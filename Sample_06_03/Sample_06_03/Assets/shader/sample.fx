@@ -13,31 +13,35 @@ cbuffer ModelCb : register(b0)
 cbuffer LightCb : register(b1)
 {
     float3 dirLigDirection; // ライトの方向
-    float4 dirLigColor;     // ライトの色
-    float3 eyePos;          // カメラの視点
-    float specPow;          // スペキュラの絞り
-    float3 ambientLight;    // 環境光
+    float4 dirLigColor; // ライトの色
+    float3 eyePos; // カメラの視点
+    float specPow; // スペキュラの絞り
+    float3 ambientLight; // 環境光
 };
 
 // 頂点シェーダーへの入力
 struct SVSIn
 {
-    float4 pos : POSITION;      // モデルの頂点座標
-    float3 normal : NORMAL;     // 法線
-    float3 tangent  : TANGENT;
+    float4 pos : POSITION; // モデルの頂点座標
+    float3 normal : NORMAL; // 法線
+
+    // step-1 頂点シェーダーの入力に接ベクトルと従ベクトルを追加
+    float3 tangent : TANGENT;
     float3 biNormal : BINORMAL;
-    float2 uv : TEXCOORD0;      // UV座標
+    float2 uv : TEXCOORD0; // UV座標
 };
 
 // ピクセルシェーダーへの入力
 struct SPSIn
 {
-    float4 pos : SV_POSITION;       // スクリーン空間でのピクセルの座標
-    float3 normal : NORMAL;         // 法線
-    float3 tangent : TANGENT;       // 接ベクトル
-    float3 biNormal : BINORMAL;     // 従ベクトル
-    float2 uv : TEXCOORD0;          // uv座標
-    float3 worldPos : TEXCOORD1;    // ワールド空間でのピクセルの座標
+    float4 pos : SV_POSITION; // スクリーン空間でのピクセルの座標
+    float3 normal : NORMAL; // 法線
+
+    float3 tangent : TANGENT; // 接ベクトル
+    float3 biNormal : BINORMAL; // 従ベクトル
+
+    float2 uv : TEXCOORD0; // uv座標
+    float3 worldPos : TEXCOORD1; // ワールド空間でのピクセルの座標
 };
 
 /////////////////////////////////////////////////////////////////////////
@@ -60,6 +64,7 @@ Texture2D<float4> g_normalMap : register(t1);
 Texture2D<float4> g_specularMap : register(t2);
 
 // step-1 AOマップにアクセスするための変数を追加
+Texture2D<float4> g_aoMap : register(t10);
 
 // サンプラーステート
 sampler g_sampler : register(s0);
@@ -92,9 +97,9 @@ float4 PSMain(SPSIn psIn) : SV_Target0
 {
     // ディフューズマップをサンプリング
     float4 diffuseMap = g_texture.Sample(g_sampler, psIn.uv);
+
     // 法線を計算
-    float3 normal =
-        CalcNormal(psIn.normal, psIn.tangent, psIn.biNormal, psIn.uv);
+    float3 normal = CalcNormal(psIn.normal, psIn.tangent, psIn.biNormal, psIn.uv);
 
     // Lambert拡散反射光を計算する
     float3 diffuseLig = CalcLambertDiffuse(normal);
@@ -106,8 +111,10 @@ float4 PSMain(SPSIn psIn) : SV_Target0
     float3 ambient = ambientLight;
 
     // step-2 AOマップから環境光の強さをサンプリング
+    float ambientPower = g_aoMap.Sample(g_sampler, psIn.uv);
 
     // step-3 環境光の強さを環境光に乗算する
+    ambient *= ambientPower;
 
     // 拡散反射 + 鏡面反射 + 環境光を合算して最終的な反射光を計算する
     float3 lig = diffuseLig + specLig + ambient;
@@ -125,14 +132,16 @@ float3 CalcNormal(float3 normal, float3 tangent, float3 biNormal, float2 uv)
 {
     float3 binSpaceNormal = g_normalMap.SampleLevel(g_sampler, uv, 0.0f).xyz;
     binSpaceNormal = (binSpaceNormal * 2.0f) - 1.0f;
+
     float3 newNormal = tangent * binSpaceNormal.x
                      + biNormal * binSpaceNormal.y
                      + normal * binSpaceNormal.z;
+
     return newNormal;
 }
 
 /////////////////////////////////////////////////////////////////////////
-//  Lambert拡散反射を計算
+// Lambert拡散反射を計算
 /////////////////////////////////////////////////////////////////////////
 float3 CalcLambertDiffuse(float3 normal)
 {
@@ -164,6 +173,6 @@ float3 CalcPhongSpecular(float3 normal, float3 worldPos, float2 uv)
     float specPower = g_specularMap.Sample(g_sampler, uv).a;
 
     // 鏡面反射の強さを鏡面反射光に乗算する
-    specularLig *= specPower * 2.0f;
+    specularLig *= specPower * 4.0f;
     return specularLig;
 }

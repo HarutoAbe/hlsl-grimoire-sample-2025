@@ -39,6 +39,9 @@ float4 PSMain(VSOutput vsOut) : SV_Target0
         g_sampler, // 第1引数はサンプラー。今は気にしなくてよい
         vsOut.uv    // 第2引数はUV座標
     ); 
+    
+    texColor *= float4(vsOut.color, 1.0f); // 頂点カラーを掛け合わせる
+    
     return texColor;
 
     // 以下はコメントアウト

@@ -29,16 +29,16 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 	cb.Init(sizeof(Matrix));
 	// 三角形ポリゴンを定義
 	TrianglePolygon triangle;
-	TrianglePolygon triangle2;
+	//TrianglePolygon triangle2;
 	triangle.Init(rootSignature);
-	triangle2.Init(rootSignature2);
+	//riangle2.Init(rootSignature2);
 
 	// UV座標を頂点0と頂点2で入れ替えると反転する
 
 	// step-1 三角形ポリゴンにUV座標を設定
 	triangle.SetUVCoord(
 		0, // 頂点の番号
-		1.0f, // U座標
+		0.0f, // U座標
 		1.0f // V座標
 	);
 
@@ -50,11 +50,11 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 
 	triangle.SetUVCoord(
 		2, // 頂点の番号
-		0.0f, // U座標
+		1.0f, // U座標
 		1.0f // V座標
 	);
 
-	
+
 
 	// step-2 テクスチャをロード
 	Texture tex;
@@ -76,7 +76,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 	// 初期化を行うコードを書くのはここまで！！！
 	//////////////////////////////////////
 	auto& renderContext = g_graphicsEngine->GetRenderContext();
-	
+
 	// ここからゲームループ
 	while (DispatchWindowMessage())
 	{
@@ -102,7 +102,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 
 		//三角形をドロー
 		triangle.Draw(renderContext);
-		triangle2.Draw(renderContext);
+		//triangle2.Draw(renderContext);
 
 		/// //////////////////////////////////////
 		//絵を描くコードを書くのはここまで！！！

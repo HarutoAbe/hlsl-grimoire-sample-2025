@@ -4,29 +4,29 @@
 
 cbuffer cb : register(b0)
 {
-    float4x4 mvp;       // MVP行列
-    float4 mulColor;    // 乗算カラー
+    float4x4 mvp; // MVP行列
+    float4 mulColor; // 乗算カラー
 };
 
 struct VSInput
 {
     float4 pos : POSITION;
-    float2 uv  : TEXCOORD0;
+    float2 uv : TEXCOORD0;
 };
 
 struct PSInput
 {
     float4 pos : SV_POSITION;
-    float2 uv  : TEXCOORD0;
+    float2 uv : TEXCOORD0;
 };
 
 Texture2D<float4> colorTexture : register(t0); // カラーテクスチャ
 sampler Sampler : register(s0);
 
 // ハッシュ関数
-float hash( float n )
+float hash(float n)
 {
-    return frac(sin(n)*43758.5453);
+    return frac(sin(n) * 43758.5453);
 }
 
 // 3次元ベクトルからシンプレックスノイズを生成する関数
@@ -56,6 +56,18 @@ PSInput VSMain(VSInput In)
 float4 PSMain(PSInput In) : SV_Target0
 {
     // step-1 シンプレックスノイズを利用してノイズ加工を行う
+    // シンプレックスノイズを使用して、0～1の乱数を取得
+    float t = SimplexNoise(In.pos.xyz);
+
+    // ノイズの値の範囲を0～1から-1～1に変換
+    t = (t - 0.5f) * 2.0f;
+
+    // UV座標にノイズを加える。0.01fはノイズの強さ
+    // この数値を大きくするとノイズが大きくなる
+    float2 uv = In.uv + t * 0.01f;
+
+    // ずらしたUV座標を利用して、カラーをサンプリングする
+    float4 color = colorTexture.Sample(Sampler, uv);
 
     return color;
 }

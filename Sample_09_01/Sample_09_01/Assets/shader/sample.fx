@@ -4,22 +4,26 @@
 
 cbuffer cb : register(b0)
 {
-    float4x4 mvp;       // MVP行列
-    float4 mulColor;    // 乗算カラー
+    float4x4 mvp; // MVP行列
+    float4 mulColor; // 乗算カラー
 };
 
 // step-4 ワイプサイズにアクセスするための定数バッファーを定義する
+cbuffer WipeCB : register(b1)
+{
+    float wipeSize; //ワイプサイズ
+};
 
 struct VSInput
 {
     float4 pos : POSITION;
-    float2 uv  : TEXCOORD0;
+    float2 uv : TEXCOORD0;
 };
 
 struct PSInput
 {
     float4 pos : SV_POSITION;
-    float2 uv  : TEXCOORD0;
+    float2 uv : TEXCOORD0;
 };
 
 Texture2D<float4> colorTexture : register(t0); // カラーテクスチャ
@@ -38,6 +42,8 @@ float4 PSMain(PSInput In) : SV_Target0
     float4 color = colorTexture.Sample(Sampler, In.uv);
 
     // step-5 ワイプサイズの値に応じてピクセルをクリップする
+    //clip(In.pos.x - wipeSize);
+    clip(wipeSize - In.pos.x);
 
     return color;
 }

@@ -15,33 +15,33 @@ cbuffer ModelCb : register(b0)
 // ディレクションライト
 struct DirectionalLight
 {
-    float3 direction;   // ライトの方向
-    float4 color;       // ライトの色
+    float3 direction; // ライトの方向
+    float4 color; // ライトの色
 };
 
 // ライト用の定数バッファー
 cbuffer LightCb : register(b1)
 {
     DirectionalLight directionalLight[NUM_DIRECTIONAL_LIGHT];
-    float3 eyePos;          // カメラの視点
-    float specPow;          // スペキュラの絞り
-    float3 ambientLight;    // 環境光
+    float3 eyePos; // カメラの視点
+    float specPow; // スペキュラの絞り
+    float3 ambientLight; // 環境光
 };
 
 // 頂点シェーダーへの入力
 struct SVSIn
 {
-    float4 pos : POSITION;  // モデルの頂点座標
+    float4 pos : POSITION; // モデルの頂点座標
     float3 normal : NORMAL; // 法線
-    float2 uv : TEXCOORD0;  // UV座標
+    float2 uv : TEXCOORD0; // UV座標
 };
 
 // ピクセルシェーダーへの入力
 struct SPSIn
 {
-    float4 pos : SV_POSITION;   // スクリーン空間でのピクセルの座標
-    float3 normal : NORMAL;     // 法線
-    float2 uv : TEXCOORD0;      // uv座標
+    float4 pos : SV_POSITION; // スクリーン空間でのピクセルの座標
+    float3 normal : NORMAL; // 法線
+    float2 uv : TEXCOORD0; // uv座標
 };
 
 // モデルテクスチャ
@@ -73,7 +73,7 @@ float4 PSMain(SPSIn psIn) : SV_Target0
     float3 lig = 0;
 
     // ディレクションライト4本分の拡散反射光を計算する
-    for(int ligNo = 0; ligNo < NUM_DIRECTIONAL_LIGHT; ligNo++)
+    for (int ligNo = 0; ligNo < NUM_DIRECTIONAL_LIGHT; ligNo++)
     {
         ///////////////////////////////////////////////////////////
         // Lambert拡散反射モデルを使って拡散反射光を計算する
@@ -85,6 +85,7 @@ float4 PSMain(SPSIn psIn) : SV_Target0
         float3 diffuse = directionalLight[ligNo].color * NdotL;
 
         // step-1 拡散反射光を正規化する
+        diffuse /= 3.1415926f;
 
         // 拡散反射光を反射光に足し算する
         lig += diffuse;

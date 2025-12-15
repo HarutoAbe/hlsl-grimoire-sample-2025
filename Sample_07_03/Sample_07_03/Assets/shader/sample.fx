@@ -6,7 +6,7 @@
 // 定数
 ///////////////////////////////////////////////////
 static const int NUM_DIRECTIONAL_LIGHT = 4; // ディレクションライトの本数
-static const float PI = 3.1415926f;         // π
+static const float PI = 3.1415926f; // π
 
 ///////////////////////////////////////////////////
 // 構造体
@@ -22,37 +22,38 @@ cbuffer ModelCb : register(b0)
 // ディレクションライト
 struct DirectionalLight
 {
-    float3 direction;   // ライトの方向
-    float4 color;       // ライトの色
+    float3 direction; // ライトの方向
+    float4 color; // ライトの色
 };
+
 // ライト用の定数バッファー
 cbuffer LightCb : register(b1)
 {
     DirectionalLight directionalLight[NUM_DIRECTIONAL_LIGHT];
-    float3 eyePos;          // カメラの視点
-    float specPow;          // スペキュラの絞り
-    float3 ambientLight;    // 環境光
+    float3 eyePos; // カメラの視点
+    float specPow; // スペキュラの絞り
+    float3 ambientLight; // 環境光
 };
 
 // 頂点シェーダーへの入力
 struct SVSIn
 {
-    float4 pos : POSITION;  // モデルの頂点座標
+    float4 pos : POSITION; // モデルの頂点座標
     float3 normal : NORMAL; // 法線
-    float3 tangent  : TANGENT;
+    float3 tangent : TANGENT;
     float3 biNormal : BINORMAL;
-    float2 uv : TEXCOORD0;  // UV座標
+    float2 uv : TEXCOORD0; // UV座標
 };
 
 // ピクセルシェーダーへの入力
 struct SPSIn
 {
-    float4 pos : SV_POSITION;       // スクリーン空間でのピクセルの座標
-    float3 normal : NORMAL;         // 法線
+    float4 pos : SV_POSITION; // スクリーン空間でのピクセルの座標
+    float3 normal : NORMAL; // 法線
     float3 tangent : TANGENT;
     float3 biNormal : BINORMAL;
-    float2 uv : TEXCOORD0;          // uv座標
-    float3 worldPos : TEXCOORD1;    // ワールド空間でのピクセルの座標
+    float2 uv : TEXCOORD0; // uv座標
+    float3 worldPos : TEXCOORD1; // ワールド空間でのピクセルの座標
 };
 
 ///////////////////////////////////////////////////
@@ -60,9 +61,9 @@ struct SPSIn
 ///////////////////////////////////////////////////
 
 // 各種マップにアクセスするための変数を追加
-Texture2D<float4> g_albedo : register(t0);           // アルベドマップ
-Texture2D<float4> g_normalMap : register(t1);        // 法線マップ
-Texture2D<float4> g_metallicSmoothMap : register(t2); // メタリックスムースマップrにメタリック、aにスムース。
+Texture2D<float4> g_albedo : register(t0); // アルベドマップ
+Texture2D<float4> g_normalMap : register(t1); // 法線マップ
+Texture2D<float4> g_metallicSmoothMap : register(t2); // メタリックスムースマップ。rにメタリック、aにスムース
 
 // サンプラーステート
 sampler g_sampler : register(s0);
@@ -73,11 +74,11 @@ sampler g_sampler : register(s0);
 
 float3 GetNormal(float3 normal, float3 tangent, float3 biNormal, float2 uv)
 {
-    float3 binSpaceNormal = g_normalMap.SampleLevel (g_sampler, uv, 0.0f).xyz;
+    float3 binSpaceNormal = g_normalMap.SampleLevel(g_sampler, uv, 0.0f).xyz;
     binSpaceNormal = (binSpaceNormal * 2.0f) - 1.0f;
 
     float3 newNormal = tangent * binSpaceNormal.x + biNormal * binSpaceNormal.y + normal * binSpaceNormal.z;
-
+    
     return newNormal;
 }
 
@@ -88,7 +89,7 @@ float Beckmann(float m, float t)
     float t4 = t * t * t * t;
     float m2 = m * m;
     float D = 1.0f / (4.0f * m2 * t4);
-    D *= exp((-1.0f / m2) * (1.0f-t2)/ t2);
+    D *= exp((-1.0f / m2) * (1.0f - t2) / t2);
     return D;
 }
 
@@ -96,7 +97,7 @@ float Beckmann(float m, float t)
 float SpcFresnel(float f0, float u)
 {
     // from Schlick
-    return f0 + (1-f0) * pow(1-u, 5);
+    return f0 + (1 - f0) * pow(1 - u, 5);
 }
 
 /// <summary>
@@ -130,7 +131,7 @@ float CookTorranceSpecular(float3 L, float3 V, float3 N, float metallic)
     float F = SpcFresnel(f0, VdotH);
 
     // G項を求める
-    float G = min(1.0f, min(2*NdotH*NdotV/VdotH, 2*NdotH*NdotL/VdotH));
+    float G = min(1.0f, min(2 * NdotH * NdotV / VdotH, 2 * NdotH * NdotL / VdotH));
 
     // m項を求める
     float m = PI * NdotV * NdotH;
@@ -156,7 +157,33 @@ float CookTorranceSpecular(float3 L, float3 V, float3 N, float metallic)
 float CalcDiffuseFromFresnel(float3 N, float3 L, float3 V)
 {
     // step-1 ディズニーベースのフレネル反射による拡散反射を真面目に実装する。
-    
+    // 光源に向かうベクトルと視線に向かうベクトルのハーフベクトルを求める
+    float3 H = normalize(L + V);
+
+    // 粗さは0.5で固定。
+    float roughness = 0.5f;
+
+    float energyBias = lerp(0.0f, 0.5f, roughness);
+    float energyFactor = lerp(1.0, 1.0 / 1.51, roughness);
+
+    // 光源に向かうベクトルとハーフベクトルがどれだけ似ているかを内積で求める
+    float dotLH = saturate(dot(L, H));
+
+    // 光源に向かうベクトルとハーフベクトル、
+    // 光が平行に入射したときの拡散反射量を求めている
+    float Fd90 = energyBias + 2.0 * dotLH * dotLH * roughness;
+
+    // 法線と光源に向かうベクトルwを利用して拡散反射率を求める
+    float dotNL = saturate(dot(N, L));
+    float FL = (1 + (Fd90 - 1) * pow(1 - dotNL, 5));
+
+    // 法線と視点に向かうベクトルを利用して拡散反射率を求める
+    float dotNV = saturate(dot(N, V));
+    float FV = (1 + (Fd90 - 1) * pow(1 - dotNV, 5));
+
+    // 法線と光源への方向に依存する拡散反射率と、法線と視点ベクトルに依存する拡散反射率を
+    // 乗算して最終的な拡散反射率を求めている。PIで除算しているのは正規化を行うため
+    return (FL * FV * energyFactor);
 }
 
 /// <summary>
@@ -202,7 +229,7 @@ float4 PSMain(SPSIn psIn) : SV_Target0
     float3 toEye = normalize(eyePos - psIn.worldPos);
 
     float3 lig = 0;
-    for(int ligNo = 0; ligNo < NUM_DIRECTIONAL_LIGHT; ligNo++)
+    for (int ligNo = 0; ligNo < NUM_DIRECTIONAL_LIGHT; ligNo++)
     {
         // シンプルなディズニーベースの拡散反射を実装する。
         // フレネル反射を考慮した拡散反射を計算
@@ -224,7 +251,7 @@ float4 PSMain(SPSIn psIn) : SV_Target0
 
         // 金属度が高ければ、鏡面反射はスペキュラカラー、低ければ白
         // スペキュラカラーの強さを鏡面反射率として扱う
-        spec *= lerp( float3( 1.0f, 1.0f, 1.0f), specColor, metallic);
+        spec *= lerp(float3(1.0f, 1.0f, 1.0f), specColor, metallic);
 
         // 滑らかさを使って、拡散反射光と鏡面反射光を合成する
         // 滑らかさが高ければ、拡散反射は弱くなる
