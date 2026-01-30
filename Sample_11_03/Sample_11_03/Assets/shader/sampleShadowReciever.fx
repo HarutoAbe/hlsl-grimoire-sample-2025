@@ -19,29 +19,29 @@ cbuffer ShadowCb : register(b1)
 // 頂点シェーダーへの入力
 struct SVSIn
 {
-    float4 pos : POSITION;  // スクリーン空間でのピクセルの座標
+    float4 pos : POSITION; // スクリーン空間でのピクセルの座標
     float3 normal : NORMAL; // 法線
-    float2 uv : TEXCOORD0;  // uv座標
+    float2 uv : TEXCOORD0; // uv座標
 };
 
 // ピクセルシェーダーへの入力
 struct SPSIn
 {
-    float4 pos : SV_POSITION;       // スクリーン空間でのピクセルの座標
-    float3 normal : NORMAL;         // 法線
-    float2 uv : TEXCOORD0;          // uv座標
+    float4 pos : SV_POSITION; // スクリーン空間でのピクセルの座標
+    float3 normal : NORMAL; // 法線
+    float2 uv : TEXCOORD0; // uv座標
 
     // ライトビュースクリーン空間での座標を追加
-    float4 posInLVP : TEXCOORD1;    // ライトビュースクリーン空間でのピクセルの座標
+    float4 posInLVP : TEXCOORD1; // ライトビュースクリーン空間でのピクセルの座標
 };
 
 ///////////////////////////////////////////////////
 // グローバル変数
 ///////////////////////////////////////////////////
 
-Texture2D<float4> g_albedo : register(t0);      // アルベドマップ
-Texture2D<float4> g_shadowMap : register(t10);  // シャドウマップ
-sampler g_sampler : register(s0);               //  サンプラーステート
+Texture2D<float4> g_albedo : register(t0); // アルベドマップ
+Texture2D<float4> g_shadowMap : register(t10); // シャドウマップ
+sampler g_sampler : register(s0); //  サンプラーステート
 
 /// <summary>
 /// 影が落とされる3Dモデル用の頂点シェーダー
@@ -75,13 +75,19 @@ float4 PSMain(SPSIn psIn) : SV_Target0
     shadowMapUV += 0.5f;
 
     // step-4 ライトビュースクリーン空間でのZ値を計算する
+    float zInLVP = psIn.posInLVP.z / psIn.posInLVP.w;
 
-    if(shadowMapUV.x > 0.0f && shadowMapUV.x < 1.0f
+    if (shadowMapUV.x > 0.0f && shadowMapUV.x < 1.0f
         && shadowMapUV.y > 0.0f && shadowMapUV.y < 1.0f)
     {
-        // step-5 シャドウマップに描き込まれているZ値と比較する
-
+        // step-3 シャドウマップに描き込まれているZ値と比較する
+        // 計算したUV座標を使って、シャドウマップから深度値をサンプリング
+        float zInShadowMap = g_shadowMap.Sample(g_sampler, shadowMapUV).r;
+        if (zInLVP > zInShadowMap)
+        {
+            // 遮蔽されている
+            color.xyz *= 0.5f;
+        }
     }
-
     return color;
 }
