@@ -32,6 +32,8 @@ public:
 	/// <param name="U">U座標</param>
 	/// <param name="V">V座標</param>
 	void SetUVCoord(int vertNo, float U, float V);
+
+	void SetVertexPos(int vertNo, float x, float y, float z);
 private:
 	/// <summary>
 	/// パイプラインステートを初期化。
