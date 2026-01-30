@@ -8,6 +8,13 @@ struct SimpleVertex
     Vector2 uv;     // UV座標
 };
 
+// 追加
+struct ExpandCB
+{
+    float time;
+    float wipeRate;
+};
+
 // 関数宣言
 void InitRootSignature(RootSignature& rs);
 void InitPipelineState(PipelineState& pipelineState, RootSignature& rs, Shader& vs, Shader& ps);
@@ -39,9 +46,13 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
     spriteInitData.m_height = FRAME_BUFFER_H;
 
     // ワイプサイズ
-    float monochromeRate = 0.0f;
-    spriteInitData.m_expandConstantBuffer = &monochromeRate;
-    spriteInitData.m_expandConstantBufferSize = sizeof(monochromeRate);
+    // 追加
+    ExpandCB expandCB = {};
+    expandCB.time = 0.0f;
+    expandCB.wipeRate = 0.0f;
+
+    spriteInitData.m_expandConstantBuffer = &expandCB;
+    spriteInitData.m_expandConstantBufferSize = sizeof(ExpandCB);
 
     // Spriteクラスのオブジェクトを定義して初期化する
     Sprite test2D;
@@ -64,9 +75,23 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
         // ここから絵を描くコードを記述する
         //////////////////////////////////////
         // ワイプサイズを増やして少しずつワイプさせる
-        monochromeRate += 0.01f;
-        if (monochromeRate > 1.0f) {
-            monochromeRate = 1.0f;
+        // 時間を進める
+        //追加
+        expandCB.time += 0.05f;
+
+        // ワイプを往復させる
+        static float wipeDir = 1.0f;
+        expandCB.wipeRate += 0.01f * wipeDir;
+
+        if (expandCB.wipeRate >= 1.0f)
+        {
+            expandCB.wipeRate = 1.0f;
+            wipeDir = -1.0f;
+        }
+        else if (expandCB.wipeRate <= 0.0f)
+        {
+            expandCB.wipeRate = 0.0f;
+            wipeDir = 1.0f;
         }
         // スプライトのドローコールを実行する
         test2D.Draw(renderContext);
