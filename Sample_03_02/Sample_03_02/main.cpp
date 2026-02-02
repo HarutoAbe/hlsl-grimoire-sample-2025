@@ -10,81 +10,172 @@ void InitRootSignature(RootSignature& rs);
 ///////////////////////////////////////////////////////////////////
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow)
 {
-    // ゲームの初期化
-    InitGame(hInstance, hPrevInstance, lpCmdLine, nCmdShow, TEXT("Game"));
+	// ゲームの初期化
+	InitGame(hInstance, hPrevInstance, lpCmdLine, nCmdShow, TEXT("Game"));
 
-    //////////////////////////////////////
-    // ここから初期化を行うコードを記述する
-    //////////////////////////////////////
+	//////////////////////////////////////
+	// ここから初期化を行うコードを記述する
+	//////////////////////////////////////
 
-    // ルートシグネチャを作成
-    RootSignature rootSignature;
-    InitRootSignature(rootSignature);
+	// ルートシグネチャを作成
+	RootSignature rootSignature;
+	InitRootSignature(rootSignature);
 
-    // 定数バッファを作成
-    ConstantBuffer cb;
+	// 定数バッファを作成
+	ConstantBuffer cb;
 
-    cb.Init(sizeof(Matrix));
-    // 三角形ポリゴンを定義
-    TrianglePolygon triangle;
-    triangle.Init(rootSignature);
+	cb.Init(sizeof(Matrix));
+	// 三角形ポリゴンを定義
+	TrianglePolygon triangle;
+	TrianglePolygon triangle2;
+	triangle.Init(rootSignature);
+	triangle2.Init(rootSignature);
 
-    // step-1 三角形ポリゴンにUV座標を設定
+	// step-1 三角形ポリゴンにUV座標を設定
+	// 四角形の頂点（-0.5,-0.5）から(0.5,0.5)
+	// 1枚目の三角形。左下、右下、左の順番）
+	// 最初の数値を変えて色を反転させるように見せる
+	triangle.SetVertexPos(
+		0,
+		-0.5f,
+		-0.5f,
+		0.0f
+	); // v0
 
-    // step-2 テクスチャをロード
+	triangle.SetVertexPos(
+		2,
+		0.5f,
+		-0.5f,
+		0.0f
+	); // v1
 
-    // ディスクリプタヒープを作成
-    DescriptorHeap ds;
-    ds.RegistConstantBuffer(0, cb); // ディスクリプタヒープに定数バッファを登録
+	triangle.SetVertexPos(
+		1,
+		-0.5f,
+		0.5f,
+		0.0f
+	); // v2
 
-    // step-3 テクスチャをディスクリプタヒープに登録
+	triangle.SetUVCoord(
+		2,
+		0.0f,
+		1.0f
+	); // v0
 
-    ds.Commit();                    //ディスクリプタヒープへの登録を確定
+	triangle.SetUVCoord(
+		1,
+		1.0f,
+		1.0f
+	); // v1
 
-    //////////////////////////////////////
-    // 初期化を行うコードを書くのはここまで！！！
-    //////////////////////////////////////
-    auto& renderContext = g_graphicsEngine->GetRenderContext();
+	triangle.SetUVCoord(
+		0,
+		0.0f,
+		0.0f
+	); // v2
 
-    // ここからゲームループ
-    while (DispatchWindowMessage())
-    {
-        // フレーム開始
-        g_engine->BeginFrame();
+	// 2枚目の三角形（右下、右上、左上）
+	triangle2.SetVertexPos(
+		2,
+		0.5f,
+		-0.5f,
+		0.0f
+	); // v1
 
-        //////////////////////////////////////
-        // ここから絵を描くコードを記述する
-        //////////////////////////////////////
+	triangle2.SetVertexPos(
+		0,
+		0.5f,
+		0.5f,
+		0.0f
+	); // v3
 
-        // ルートシグネチャを設定
-        renderContext.SetRootSignature(rootSignature);
+	triangle2.SetVertexPos(
+		1,
+		-0.5f,
+		0.5f,
+		0.0f
+	); // v2
 
-        // ワールド行列を作成
-        Matrix mWorld;
+	triangle2.SetUVCoord(
+		0,
+		1.0f,
+		1.0f
+	); // v1
 
-        // ワールド行列をグラフィックメモリにコピー
-        cb.CopyToVRAM(mWorld);
+	triangle2.SetUVCoord(
+		1,
+		1.0f,
+		0.0f
+	); // v3
 
-        //ディスクリプタヒープを設定
-        renderContext.SetDescriptorHeap(ds);
+	triangle2.SetUVCoord(
+		2,
+		0.0f,
+		0.0f
+	); // v2
 
-        //三角形をドロー
-        triangle.Draw(renderContext);
+	// step-2 テクスチャをロード
+	Texture tex;
+	tex.InitFromDDSFile(L"Assets/image/sample_00.dds");
 
-        /// //////////////////////////////////////
-        //絵を描くコードを書くのはここまで！！！
-        //////////////////////////////////////
-        //フレーム終了
-        g_engine->EndFrame();
-    }
-    return 0;
+	// ディスクリプタヒープを作成
+	DescriptorHeap ds;
+	ds.RegistConstantBuffer(0, cb); // ディスクリプタヒープに定数バッファを登録
+
+	// step-3 テクスチャをディスクリプタヒープに登録
+	ds.RegistShaderResource(
+		0,  // レジスタ番号
+		tex // レジスタに設定するテクスチャ
+	);
+	ds.Commit();                    // ディスクリプタヒープへの登録を確定
+
+
+
+	//////////////////////////////////////
+	// 初期化を行うコードを書くのはここまで！！！
+	//////////////////////////////////////
+	auto& renderContext = g_graphicsEngine->GetRenderContext();
+
+	// ここからゲームループ
+	while (DispatchWindowMessage())
+	{
+		// フレーム開始
+		g_engine->BeginFrame();
+
+		//////////////////////////////////////
+		// ここから絵を描くコードを記述する
+		//////////////////////////////////////
+
+		// ルートシグネチャを設定
+		renderContext.SetRootSignature(rootSignature);
+
+		// ワールド行列を作成
+		Matrix mWorld;
+
+		// ワールド行列をグラフィックメモリにコピー
+		cb.CopyToVRAM(mWorld);
+
+		// ディスクリプタヒープを設定
+		renderContext.SetDescriptorHeap(ds);
+
+		// 三角形をドロー
+		triangle.Draw(renderContext);
+		triangle2.Draw(renderContext);
+
+		//////////////////////////////////////
+		// 絵を描くコードを書くのはここまで！！！
+		//////////////////////////////////////
+		// フレーム終了
+		g_engine->EndFrame();
+	}
+	return 0;
 }
 
 //ルートシグネチャの初期化
 void InitRootSignature(RootSignature& rs)
 {
-    rs.Init(D3D12_FILTER_MIN_MAG_MIP_LINEAR,
-        D3D12_TEXTURE_ADDRESS_MODE_WRAP,
-        D3D12_TEXTURE_ADDRESS_MODE_WRAP,
-        D3D12_TEXTURE_ADDRESS_MODE_WRAP);
+	rs.Init(D3D12_FILTER_MIN_MAG_MIP_LINEAR,
+		D3D12_TEXTURE_ADDRESS_MODE_WRAP,
+		D3D12_TEXTURE_ADDRESS_MODE_WRAP,
+		D3D12_TEXTURE_ADDRESS_MODE_WRAP);
 }
