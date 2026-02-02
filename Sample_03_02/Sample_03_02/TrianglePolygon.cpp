@@ -90,6 +90,15 @@ void TrianglePolygon::SetUVCoord(int vertNo, float U, float V)
 	m_vertices[vertNo].uv[1] = V;
 	m_vertexBuffer.Copy(m_vertices);
 }
+
+void TrianglePolygon::SetVertexPos(int vertNo, float x, float y, float z)
+{
+	m_vertices[vertNo].pos[0] = x;
+	m_vertices[vertNo].pos[1] = y;
+	m_vertices[vertNo].pos[2] = z;
+	m_vertexBuffer.Copy(m_vertices);
+}
+
 void TrianglePolygon::InitIndexBuffer()
 {
 	unsigned short indices[] = {
