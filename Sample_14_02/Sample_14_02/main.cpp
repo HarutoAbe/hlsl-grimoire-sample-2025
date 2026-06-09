@@ -10,7 +10,7 @@ void InitRootSignature(RootSignature& rs);
 // ウィンドウプログラムのメイン関数
 ///////////////////////////////////////////////////////////////////
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
-    LPWSTR lpCmdLine, int nCmdShow)
+                    LPWSTR lpCmdLine, int nCmdShow)
 {
     // ゲームの初期化
     InitGame(hInstance, hPrevInstance, lpCmdLine, nCmdShow, TEXT("Game"));
@@ -18,6 +18,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     //////////////////////////////////////
     // ここから初期化を行うコードを記述する
     //////////////////////////////////////
+
     // ルートシグネチャを作成
     RootSignature rootSignature;
     InitRootSignature(rootSignature);
@@ -31,17 +32,6 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     bgModelRender.InitDeferredRendering(renderingEngine, "Assets/modelData/bg/bg.tkm", true);
 
     // step-1 ティーポットモデルの描画処理を初期化
-    myRenderer::ModelInitDataFR modelInitData;
-    modelInitData.m_tkmFilePath = "Assets/modelData/teapot.tkm";
-    modelInitData.m_fxFilePath = "Assets/shader/sample.fx";
-
-    //【注目】メインレンダリングターゲットのスナップショットテクスチャを拡張SRVに指定する
-    modelInitData.m_expandShaderResoruceView[0] = &renderingEngine.GetMainRenderTargetSnapshotDrawnOpacity();
-    myRenderer::ModelRender teapotModelRender;
-
-    //フォワードレンダリングの描画パスで実行されるように初期化する
-    teapotModelRender.InitForwardRendering(renderingEngine, modelInitData);
-    teapotModelRender.SetShadowCasterFlag(true);
 
     teapotModelRender.UpdateWorldMatrix({ 0.0f, 20.0f, 0.0f }, g_quatIdentity, g_vec3One);
 
@@ -66,9 +56,8 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
         bgModelRender.Draw();
 
         // step-2 ティーポットモデルを描画
-        teapotModelRender.Draw();
 
-        // レンダリングパイプラインを実行
+        //レンダリングパイプラインを実行
         renderingEngine.Execute(renderContext);
 
         /////////////////////////////////////////
@@ -85,7 +74,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 void InitRootSignature(RootSignature& rs)
 {
     rs.Init(D3D12_FILTER_MIN_MAG_MIP_LINEAR,
-        D3D12_TEXTURE_ADDRESS_MODE_WRAP,
-        D3D12_TEXTURE_ADDRESS_MODE_WRAP,
-        D3D12_TEXTURE_ADDRESS_MODE_WRAP);
+            D3D12_TEXTURE_ADDRESS_MODE_WRAP,
+            D3D12_TEXTURE_ADDRESS_MODE_WRAP,
+            D3D12_TEXTURE_ADDRESS_MODE_WRAP);
 }
