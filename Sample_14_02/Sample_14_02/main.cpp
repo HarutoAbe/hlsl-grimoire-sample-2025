@@ -37,11 +37,12 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     myRenderer::ModelInitDataFR modelInitData;
     modelInitData.m_tkmFilePath = "Assets/modelData/teapot.tkm";
     modelInitData.m_fxFilePath = "Assets/shader/sample.fx";
+
     // シェーダーへ渡す拡張定数バッファを設定（定数バッファは16バイト境界で扱われるためサイズは16に）
     modelInitData.m_expandConstantBuffer = &rotationY;
     modelInitData.m_expandConstantBufferSize = 16;
 
-    //【注目】メインレンダリングターゲットのスナップショットテクスチャを拡張SRVに指定する
+    //　メインレンダリングターゲットのスナップショットテクスチャを拡張SRVに指定する
     modelInitData.m_expandShaderResoruceView[0] = &renderingEngine.GetMainRenderTargetSnapshotDrawnOpacity();
     myRenderer::ModelRender teapotModelRender;
 
