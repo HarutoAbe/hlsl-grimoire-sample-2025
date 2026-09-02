@@ -43,34 +43,34 @@ struct SVertex
 // 定数バッファーなので16バイトアライメントに気を付けること
 struct Camera
 {
-    float4x4 mCameraRot;    // カメラの回転行列
-    float3 pos;             // カメラ座標
-    float aspect;           // アスペクト比
-    float far;              // 遠平面
-    float near;             // 近平面
+    float4x4 mCameraRot; // カメラの回転行列
+    float3 pos; // カメラ座標
+    float aspect; // アスペクト比
+    float far; // 遠平面
+    float near; // 近平面
 };
 
-cbuffer rayGenCB :register(b0)
+cbuffer rayGenCB : register(b0)
 {
     Camera g_camera; // カメラ
 };
 
-RaytracingAccelerationStructure g_raytracingWorld : register(t0);    // レイトレワールド
-Texture2D<float4> gAlbedoTexture : register(t1);    // アルベドマップ
-Texture2D<float4> g_normalMap : register(t2);       // 法線マップ
-Texture2D<float4> g_specularMap : register(t3);     // スペキュラマップ
-Texture2D<float4> g_reflectionMap : register(t4);   // リフレクションマップ
-Texture2D<float4> g_refractionMap : register(t5);   // 屈折マップ
-StructuredBuffer<SVertex> g_vertexBuffers : register(t6);   // 頂点バッファー
-StructuredBuffer<int> g_indexBuffers : register(t7);        // インデックスバッファー
+RaytracingAccelerationStructure g_raytracingWorld : register(t0); // レイトレワールド
+Texture2D<float4> gAlbedoTexture : register(t1); // アルベドマップ
+Texture2D<float4> g_normalMap : register(t2); // 法線マップ
+Texture2D<float4> g_specularMap : register(t3); // スペキュラマップ
+Texture2D<float4> g_reflectionMap : register(t4); // リフレクションマップ
+Texture2D<float4> g_refractionMap : register(t5); // 屈折マップ
+StructuredBuffer<SVertex> g_vertexBuffers : register(t6); // 頂点バッファー
+StructuredBuffer<int> g_indexBuffers : register(t7); // インデックスバッファー
 
 RWTexture2D<float4> gOutput : register(u0);
 
-SamplerState  s : register(s0);
+SamplerState s : register(s0);
 
 struct RayPayload
 {
-    float3 color;               // カラー
+    float3 color; // カラー
     int hit;
     int depth;
 };
@@ -122,7 +122,7 @@ float3 GetNormal(BuiltInTriangleIntersectionAttributes attribs, float2 uv)
 
     float3 binormal = normalize(cross(tangent, normal));
 
-    float3 binSpaceNormal = g_normalMap.SampleLevel (s, uv, 0.0f).xyz;
+    float3 binSpaceNormal = g_normalMap.SampleLevel(s, uv, 0.0f).xyz;
     binSpaceNormal = (binSpaceNormal * 2.0f) - 1.0f;
 
     normal = tangent * binSpaceNormal.x + binormal * binSpaceNormal.y + normal * binSpaceNormal.z;
@@ -148,48 +148,178 @@ void TraceLightRay(inout RayPayload raypayload, float3 normal)
 
     TraceRay(
         g_raytracingWorld,
-        0,
-        0xFF,
-        1,
-        0,
-        1,
+        0u,
+        0xFFu,
+        1u,
+        0u,
+        1u,
         ray,
         raypayload
     );
 }
 
-// 反射レイを飛ばす
-void TraceReflectionRay(inout RayPayload raypayload, float3 normal)
+// 反射／透過レイを飛ばす
+//// uv を受け取って透過率マップを参照し、透過率に応じて透過色と反射色を混合する
+//void TraceReflectionRay(inout RayPayload raypayload, float3 normal, float2 uv)
+//{
+//    if (raypayload.depth >= 3) return;
+
+//    float hitT = RayTCurrent();
+//    float3 rayDirW = WorldRayDirection();
+//    float3 rayOriginW = WorldRayOrigin();
+//    float3 posW = rayOriginW + hitT * rayDirW;
+
+//    // 反射方向を計算して反射レイをトレース
+//    float3 reflDir = normalize(reflect(rayDirW, normal));
+//    RayDesc rRay;
+//    rRay.Origin = posW + reflDir * 0.01f; // 自己ヒット回避オフセット
+//    rRay.Direction = reflDir;
+//    rRay.TMin = 0.01f;
+//    rRay.TMax = 10000.0f;
+
+//    RayPayload reflPayload;
+//    reflPayload.depth = raypayload.depth + 1;
+//    reflPayload.color = float3(0.0f, 0.0f, 0.0f);
+
+//    TraceRay(
+//        g_raytracingWorld,
+//        0u,
+//        0xFFu,
+//        0u,
+//        0u,
+//        0u,
+//        rRay,
+//        reflPayload
+//    );
+
+//    float3 reflectedColor = reflPayload.color;
+
+//    // 透過率マップをサンプリング（0 = 不透過, 1 = 完全透過）
+//    float trans = g_refractionMap.SampleLevel(s, uv, 0.0f).r;
+
+//    if (trans > 0.001f)
+//    {
+//        // 簡易的に入射方向を透過方向として使用して透過レイをトレース
+//        RayDesc tRay;
+//        tRay.Origin = posW + rayDirW * 0.01f;
+//        tRay.Direction = normalize(rayDirW);
+//        tRay.TMin = 0.01f;
+//        tRay.TMax = 10000.0f;
+
+//        RayPayload transmitPayload;
+//        transmitPayload.depth = raypayload.depth + 1;
+//        transmitPayload.color = float3(0.0f, 0.0f, 0.0f);
+
+//        TraceRay(
+//            g_raytracingWorld,
+//            0u,
+//            0xFFu,
+//            0u,
+//            0u,
+//            0u,
+//            tRay,
+//            transmitPayload
+//        );
+
+//        // 透過率で反射色と透過色を混ぜる
+//        raypayload.color = lerp(reflectedColor, transmitPayload.color, saturate(trans));
+//    }
+//    else
+//    {
+//        // 透過が無ければ反射色のみ
+//        raypayload.color = reflectedColor;
+//    }
+//}
+
+// 例：透過で屈折を計算し、Fresnelで反射/透過を混合する
+void TraceReflectionRay(inout RayPayload outPayload, float3 normal, float2 uv)
 {
-    if(raypayload.depth < 3)
+    if (outPayload.depth >= 3)
+        return;
+
+    float hitT = RayTCurrent();
+    float3 I = normalize(WorldRayDirection());
+    float3 posW = WorldRayOrigin() + hitT * I;
+    float3 N = normalize(normal);
+
+    // 反射をトレース
+    float3 reflDir = normalize(reflect(I, N));
+    RayDesc rRay;
+    rRay.Origin = posW + reflDir * 0.01f;
+    rRay.Direction = reflDir;
+    rRay.TMin = 0.01f;
+    rRay.TMax = 10000.0f;
+    RayPayload rPayload;
+    rPayload.depth = outPayload.depth + 1;
+    rPayload.color = float3(0,0,0);
+    TraceRay(g_raytracingWorld, 0u, 0xFFu, 0u, 0u, 0u, rRay, rPayload);
+    float3 reflectedColor = rPayload.color;
+
+    // テクスチャから透過率を取得 (0 = 不透過, 1 = 完全透過)
+    float transMap = g_refractionMap.SampleLevel(s, uv, 0.0f).r;
+
+    float3 transmitColor = float3(0,0,0);
+    bool hasTransmit = false;
+
+    if (transMap > 0.001f)
     {
-        float hitT = RayTCurrent();
-        float3 rayDirW = WorldRayDirection();
-        float3 rayOriginW = WorldRayOrigin();
+        // 屈折率 (外側 -> 内側)
+        float etaOutside = 1.0f;
+        float etaInside = 1.5f;
 
-        // 反射ベクトルを求める
-        float3 refDir = reflect(rayDirW, normal);
+        float cosi = clamp(dot(-I, N), -1.0f, 1.0f);
+        bool entering = cosi > 0.0f;
+        float3 n = N;
+        float eta = etaOutside / etaInside;
+        if (!entering) {
+            n = -N;
+            eta = etaInside / etaOutside;
+            cosi = clamp(dot(-I, n), -1.0f, 1.0f);
+        }
 
-        // Find the world-space hit position
-        float3 posW = rayOriginW + hitT * rayDirW;
+        float3 refrDir = refract(-I, n, eta);
+        bool tir = length(refrDir) < 1e-6;
 
-        RayDesc ray;
-        ray.Origin = posW;
-        ray.Direction = refDir;
-        ray.TMin = 0.01f;
-        ray.TMax = 10000;
-
-        TraceRay(
-            g_raytracingWorld,
-            0,
-            0xFF,
-            0,
-            0,
-            1,
-            ray,
-            raypayload
-        );
+        if (!tir)
+        {
+            RayDesc tRay;
+            tRay.Origin = posW + refrDir * 0.01f;
+            tRay.Direction = normalize(refrDir);
+            tRay.TMin = 0.01f;
+            tRay.TMax = 10000.0f;
+            RayPayload tPayload;
+            tPayload.depth = outPayload.depth + 1;
+            tPayload.color = float3(0,0,0);
+            TraceRay(g_raytracingWorld, 0u, 0xFFu, 0u, 0u, 0u, tRay, tPayload);
+            transmitColor = tPayload.color;
+            hasTransmit = true;
+        }
+        else
+        {
+            hasTransmit = false;
+        }
     }
+
+    // Fresnel (Schlick)
+    float3 F0 = float3(0.04f, 0.04f, 0.04f);
+    float cosTheta = saturate(dot(-I, N));
+    float3 fresnel = F0 + (1.0f - F0) * pow(1.0f - cosTheta, 5.0f);
+    float fresnelFactor = fresnel.x;
+
+    float materialRefl = g_reflectionMap.SampleLevel(s, uv, 0.0f).r;
+
+    float reflW = saturate(fresnelFactor * materialRefl);
+    float transW = hasTransmit ? saturate(transMap * (1.0f - fresnelFactor)) : 0.0f;
+
+    float sum = reflW + transW;
+    float3 outColor;
+    if (sum > 1e-6f) {
+        outColor = (reflectedColor * reflW + transmitColor * transW) / sum;
+    } else {
+        outColor = reflectedColor;
+    }
+
+    outPayload.color = outColor;
 }
 
 [shader("raygeneration")]
@@ -217,7 +347,7 @@ void rayGen()
     payload.depth = 0;
 
     //TraceRay
-    TraceRay(g_raytracingWorld, 0 /*rayFlags*/, 0xFF, 0 /* ray index*/, 0, 0, ray, payload);
+    TraceRay(g_raytracingWorld, 0u /*rayFlags*/, 0xFFu, 0u /* ray index*/, 0u, 0u, ray, payload);
 
     float3 col = payload.color;
 
@@ -270,9 +400,9 @@ void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attr
     // 光源にむかってレイを飛ばす
     TraceLightRay(payload, normal);
     float lig = 0.0f;
-    if(payload.hit == 0)
+    if (payload.hit == 0)
     {
-        float3 ligDir =  normalize(float3(0.5, 0.5, 0.2));
+        float3 ligDir = normalize(float3(0.5, 0.5, 0.2));
         float t = max(0.0f, dot(ligDir, normal));
         lig = t;
     }
@@ -281,15 +411,16 @@ void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attr
     lig += 0.5f;
     RayPayload refPayload;
     refPayload.depth = payload.depth;
-    refPayload.color = 0;
+    refPayload.color = float3(0.0f, 0.0f, 0.0f);
 
-    // 反射レイ
-    TraceReflectionRay(refPayload, normal);
+    // 反射／透過レイ（uv を渡す）
+    TraceReflectionRay(refPayload, normal, uv);
 
     // このプリミティブの反射率を取得
     float reflectRate = g_reflectionMap.SampleLevel(s, uv, 0.0f).r;
     float3 color = gAlbedoTexture.SampleLevel(s, uv, 0.0f).rgb;
     color *= lig;
+    // 反射率で反射色とベースカラーを混ぜる
     payload.color = lerp(color, refPayload.color, reflectRate);
 
     payload.depth--;
@@ -304,5 +435,5 @@ void shadowChs(inout RayPayload payload, in BuiltInTriangleIntersectionAttribute
 [shader("miss")]
 void shadowMiss(inout RayPayload payload)
 {
-   payload.hit = 0;
+    payload.hit = 0;
 }

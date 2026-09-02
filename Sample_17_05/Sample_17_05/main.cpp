@@ -46,6 +46,8 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 
     // 3Dモデルを作成
     Model model, bgModel;
+    // 追加モデル（box）
+    Model boxModel;
     ModelInitData initData;
 
     initData.m_tkmFilePath = "Assets/modelData/sample.tkm";
@@ -55,6 +57,14 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 
     initData.m_tkmFilePath = "Assets/modelData/bg/bg.tkm";
     bgModel.Init(initData);
+
+    // box モデルを追加で初期化
+    ModelInitData boxInitData;
+    boxInitData.m_tkmFilePath = "Assets/modelData/box.tkm";
+    boxInitData.m_fxFilePath = "Assets/shader/NoAnimModel_PBR.fx";
+    boxModel.Init(boxInitData);
+
+    
 
     //////////////////////////////////////
     // 初期化を行うコードを書くのはここまで！！！
@@ -66,6 +76,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 
     g_graphicsEngine->RegistModelToRaytracingWorld(model);
     g_graphicsEngine->RegistModelToRaytracingWorld(bgModel);
+    g_graphicsEngine->RegistModelToRaytracingWorld(boxModel);
     g_graphicsEngine->BuildRaytracingWorld(renderContext);
 
     // ここからゲームループ
