@@ -158,80 +158,8 @@ void TraceLightRay(inout RayPayload raypayload, float3 normal)
     );
 }
 
-// 反射／透過レイを飛ばす
-//// uv を受け取って透過率マップを参照し、透過率に応じて透過色と反射色を混合する
-//void TraceReflectionRay(inout RayPayload raypayload, float3 normal, float2 uv)
-//{
-//    if (raypayload.depth >= 3) return;
 
-//    float hitT = RayTCurrent();
-//    float3 rayDirW = WorldRayDirection();
-//    float3 rayOriginW = WorldRayOrigin();
-//    float3 posW = rayOriginW + hitT * rayDirW;
-
-//    // 反射方向を計算して反射レイをトレース
-//    float3 reflDir = normalize(reflect(rayDirW, normal));
-//    RayDesc rRay;
-//    rRay.Origin = posW + reflDir * 0.01f; // 自己ヒット回避オフセット
-//    rRay.Direction = reflDir;
-//    rRay.TMin = 0.01f;
-//    rRay.TMax = 10000.0f;
-
-//    RayPayload reflPayload;
-//    reflPayload.depth = raypayload.depth + 1;
-//    reflPayload.color = float3(0.0f, 0.0f, 0.0f);
-
-//    TraceRay(
-//        g_raytracingWorld,
-//        0u,
-//        0xFFu,
-//        0u,
-//        0u,
-//        0u,
-//        rRay,
-//        reflPayload
-//    );
-
-//    float3 reflectedColor = reflPayload.color;
-
-//    // 透過率マップをサンプリング（0 = 不透過, 1 = 完全透過）
-//    float trans = g_refractionMap.SampleLevel(s, uv, 0.0f).r;
-
-//    if (trans > 0.001f)
-//    {
-//        // 簡易的に入射方向を透過方向として使用して透過レイをトレース
-//        RayDesc tRay;
-//        tRay.Origin = posW + rayDirW * 0.01f;
-//        tRay.Direction = normalize(rayDirW);
-//        tRay.TMin = 0.01f;
-//        tRay.TMax = 10000.0f;
-
-//        RayPayload transmitPayload;
-//        transmitPayload.depth = raypayload.depth + 1;
-//        transmitPayload.color = float3(0.0f, 0.0f, 0.0f);
-
-//        TraceRay(
-//            g_raytracingWorld,
-//            0u,
-//            0xFFu,
-//            0u,
-//            0u,
-//            0u,
-//            tRay,
-//            transmitPayload
-//        );
-
-//        // 透過率で反射色と透過色を混ぜる
-//        raypayload.color = lerp(reflectedColor, transmitPayload.color, saturate(trans));
-//    }
-//    else
-//    {
-//        // 透過が無ければ反射色のみ
-//        raypayload.color = reflectedColor;
-//    }
-//}
-
-// 例：透過で屈折を計算し、Fresnelで反射/透過を混合する
+// 透過で屈折を計算し、Fresnelで反射/透過を混合する
 void TraceReflectionRay(inout RayPayload outPayload, float3 normal, float2 uv)
 {
     if (outPayload.depth >= 3)
@@ -251,14 +179,15 @@ void TraceReflectionRay(inout RayPayload outPayload, float3 normal, float2 uv)
     rRay.TMax = 10000.0f;
     RayPayload rPayload;
     rPayload.depth = outPayload.depth + 1;
-    rPayload.color = float3(0,0,0);
+    rPayload.color = float3(0, 0, 0);
     TraceRay(g_raytracingWorld, 0u, 0xFFu, 0u, 0u, 0u, rRay, rPayload);
     float3 reflectedColor = rPayload.color;
 
-    // テクスチャから透過率を取得 (0 = 不透過, 1 = 完全透過)
+    // テクスチャから透過率を取得
+    // 0は不透過、1は透過
     float transMap = g_refractionMap.SampleLevel(s, uv, 0.0f).r;
 
-    float3 transmitColor = float3(0,0,0);
+    float3 transmitColor = float3(0, 0, 0);
     bool hasTransmit = false;
 
     if (transMap > 0.001f)
@@ -271,7 +200,8 @@ void TraceReflectionRay(inout RayPayload outPayload, float3 normal, float2 uv)
         bool entering = cosi > 0.0f;
         float3 n = N;
         float eta = etaOutside / etaInside;
-        if (!entering) {
+        if (!entering)
+        {
             n = -N;
             eta = etaInside / etaOutside;
             cosi = clamp(dot(-I, n), -1.0f, 1.0f);
@@ -280,6 +210,7 @@ void TraceReflectionRay(inout RayPayload outPayload, float3 normal, float2 uv)
         float3 refrDir = refract(-I, n, eta);
         bool tir = length(refrDir) < 1e-6;
 
+        // tirの場合は全反射となるので、透過例は飛ばさない
         if (!tir)
         {
             RayDesc tRay;
@@ -289,7 +220,7 @@ void TraceReflectionRay(inout RayPayload outPayload, float3 normal, float2 uv)
             tRay.TMax = 10000.0f;
             RayPayload tPayload;
             tPayload.depth = outPayload.depth + 1;
-            tPayload.color = float3(0,0,0);
+            tPayload.color = float3(0, 0, 0);
             TraceRay(g_raytracingWorld, 0u, 0xFFu, 0u, 0u, 0u, tRay, tPayload);
             transmitColor = tPayload.color;
             hasTransmit = true;
@@ -300,22 +231,32 @@ void TraceReflectionRay(inout RayPayload outPayload, float3 normal, float2 uv)
         }
     }
 
-    // Fresnel (Schlick)
+    // Fresnel
+    // 反射率の計算
     float3 F0 = float3(0.04f, 0.04f, 0.04f);
     float cosTheta = saturate(dot(-I, N));
     float3 fresnel = F0 + (1.0f - F0) * pow(1.0f - cosTheta, 5.0f);
     float fresnelFactor = fresnel.x;
 
+    // マテリアルの反射率を取得
     float materialRefl = g_reflectionMap.SampleLevel(s, uv, 0.0f).r;
 
+    
+    // 反射と透過の重みを計算
     float reflW = saturate(fresnelFactor * materialRefl);
     float transW = hasTransmit ? saturate(transMap * (1.0f - fresnelFactor)) : 0.0f;
 
+    // 重みの合計を計算
     float sum = reflW + transW;
     float3 outColor;
-    if (sum > 1e-6f) {
+    
+    // 反射と透過の重みを正規化して混合する
+    if (sum > 1e-6f)
+    {
         outColor = (reflectedColor * reflW + transmitColor * transW) / sum;
-    } else {
+    }
+    else
+    {
         outColor = reflectedColor;
     }
 
